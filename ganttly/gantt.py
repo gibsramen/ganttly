@@ -1,8 +1,9 @@
 from typing import List
 import warnings
 
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.patches import Patch
+import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator
 
 from .task import Task
@@ -27,7 +28,8 @@ class Gantt:
         self,
         frequency: str = None,
         interval: float = None,
-        locator: mdates.RRuleLocator = None
+        locator: mdates.RRuleLocator = None,
+        tag_palette: dict = None
     ) -> "GanttPlot":
         if locator is not None:
             if frequency is not None or interval is not None:
@@ -44,13 +46,18 @@ class Gantt:
                 locator = mdates.MonthLocator(interval=interval)
             if frequency == "year":
                 locator == mdates.YearLocator(base=interval)
-        return GanttPlot(self, locator)
+            else:
+                raise ValueError(
+                    "freqency must be one of 'day', 'week', 'month', or 'year'"
+                )
+        return GanttPlot(self, locator, tag_palette=tag_palette)
 
 
 class GanttPlot:
     def __init__(
         self, gantt: Gantt,
-        locator: mdates.RRuleLocator
+        locator: mdates.RRuleLocator,
+        tag_palette: dict = None
     ):
         self.gantt = gantt
         self.tasks = self.gantt.tasks
@@ -64,7 +71,8 @@ class GanttPlot:
                 [(task.start, task.end - task.start)],
                 (i, 1),
                 linewidth=1,
-                edgecolor="black"
+                edgecolor="black",
+                facecolor=tag_palette.get(task.tag)
             )
 
         self.ax.tick_params("x", labelsize="small")
@@ -77,6 +85,23 @@ class GanttPlot:
         self.ax.set_yticklabels([])
 
         task_label_pos = [0.5 + i for i in range(self.num_tasks)]
+        task_names = [task.name for task in self.tasks]
         self.ax.yaxis.set_minor_locator(FixedLocator(task_label_pos))
-        self.ax.yaxis.set_ticklabels([task.name for task in self.tasks],
-                                     minor=True)
+        self.ax.yaxis.set_ticklabels(task_names, minor=True)
+
+        if tag_palette is not None:
+            patches = []
+            for tag, color in tag_palette.items():
+                _patch = Patch(
+                    edgecolor="black",
+                    facecolor=color,
+                    label=tag
+                )
+                patches.append(_patch)
+            self.ax.legend(
+                handles=patches,
+                framealpha=0,
+                ncol=len(self.tasks),
+                loc="lower center",
+                bbox_to_anchor=[0.5, 1],
+            )
