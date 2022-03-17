@@ -16,5 +16,11 @@ setup(
     version=version,
     author="Gibraan Rahman",
     author_email="gibsramen@gmail.com",
-    packages=find_packages()
+    license="BSD-3-Clause",
+    packages=find_packages(),
+    install_requires=[
+        "numpy",
+        "pandas",
+        "matplotlib",
+    ],
 )
