@@ -70,11 +70,11 @@ class Gantt:
         else:
             if frequency == "day":
                 locator = mdates.DayLocator(interval=interval)
-            if frequency == "week":
+            elif frequency == "week":
                 locator = mdates.DayLocator(interval=7*interval)
-            if frequency == "month":
+            elif frequency == "month":
                 locator = mdates.MonthLocator(interval=interval)
-            if frequency == "year":
+            elif frequency == "year":
                 locator == mdates.YearLocator(base=interval)
             else:
                 raise ValueError(
@@ -103,6 +103,9 @@ class GanttPlot:
         self.locator = locator
 
         self.fig, self.ax = plt.subplots(1, 1)
+
+        if tag_palette is None:
+            tag_palette = dict()
 
         for i, task in enumerate(self.tasks):
             self.ax.broken_barh(
