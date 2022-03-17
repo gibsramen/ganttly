@@ -11,15 +11,30 @@ from .task import Task
 
 class Gantt:
     def __init__(self, format_: str = None):
+        """Collection of tasks.
+
+        :param format_: Formatting for dates, defaults to '%Y/%m/%d'
+        :type format: str
+        """
         self.format = format_ if format_ else "%Y/%m/%d"
         self.tasks = []
 
     def add_task(self, task: Task):
+        """Add a single Task.
+
+        :param task: Task to add to Gantt
+        :type task: ganttly.task.Task
+        """
         if not isinstance(task, Task):
             raise ValueError("task must be of type Task.")
         self.tasks.append(task)
 
     def add_tasks(self, tasks: List[Task]):
+        """Add multiple Tasks.
+
+        :param tasks: Tasks to add to Gantt
+        :type task: List[ganttly.task.Task]
+        """
         if not all([isinstance(x, Task) for x in tasks]):
             raise ValueError("All entries in tasks must be of type Task.")
         self.tasks += tasks
@@ -31,6 +46,21 @@ class Gantt:
         locator: mdates.RRuleLocator = None,
         tag_palette: dict = None
     ) -> "GanttPlot":
+        """Plot the Gantt chart.
+
+        :param frequency: Grid frequency, one of 'day', 'week', 'month', or
+            'year'
+        :type param: str
+
+        :param interval: Grid interval of frequency
+        :type interval: float
+
+        :param locator: Custom Locator to use for Gantt grid (optional)
+        :type locator: matplotlib.dates.RRuleLocator
+
+        :param tag_palette: Dictionary of colors to use for each tag
+        :type tag_palette: Dict[str, str]
+        """
         if locator is not None:
             if frequency is not None or interval is not None:
                 warnings.warn(
@@ -59,6 +89,14 @@ class GanttPlot:
         locator: mdates.RRuleLocator,
         tag_palette: dict = None
     ):
+        """Visualization of Gantt chart.
+
+        :param locator: Custom Locator to use for Gantt grid (optional)
+        :type locator: matplotlib.dates.RRuleLocator
+
+        :param tag_palette: Dictionary of colors to use for each tag
+        :type tag_palette: Dict[str, str]
+        """
         self.gantt = gantt
         self.tasks = self.gantt.tasks
         self.num_tasks = len(self.tasks)

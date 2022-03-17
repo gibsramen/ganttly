@@ -15,6 +15,20 @@ class Task:
         end: Timepoint,
         tag: str = None
     ):
+        """Individual task to be plotted on a Gantt chart.
+
+        :param name: Name of task
+        :type name: str
+
+        :param start: Start time of this task
+        :type start: Timepoint
+
+        :param end: End time of this task
+        :type end: Timepoint
+
+        :param tag: Tag to apply to task for coloring (optional)
+        :type tag: str
+        """
         self.name = name
         self.start = pd.Timestamp(start)
         self.end = pd.Timestamp(end)
