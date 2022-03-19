@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 from matplotlib.patches import Patch
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator
+import seaborn as sns
 
 from .task import Task
 
@@ -44,7 +45,9 @@ class Gantt:
         frequency: str = None,
         interval: float = None,
         locator: mdates.RRuleLocator = None,
-        tag_palette: dict = None
+        facecolor: str = None,
+        color_tag: str = None,
+        palette: dict = None
     ) -> "GanttPlot":
         """Plot the Gantt chart.
 
@@ -58,8 +61,15 @@ class Gantt:
         :param locator: Custom Locator to use for Gantt grid (optional)
         :type locator: matplotlib.dates.RRuleLocator
 
-        :param tag_palette: Dictionary of colors to use for each tag
-        :type tag_palette: Dict[str, str]
+        :param facecolor: Color of Gantt bars (applied to all). This argument,
+            if provided, will override 'color_tag' and 'palette'.
+        :type facecolor: str
+
+        :param color_tag: Tag to use for coloring
+        :type color_tag: str
+
+        :param palette: Dictionary of colors to use for each tag
+        :type palette: Dict[str, str]
         """
         if locator is not None:
             if frequency is not None or interval is not None:
@@ -80,32 +90,54 @@ class Gantt:
                 raise ValueError(
                     "freqency must be one of 'day', 'week', 'month', or 'year'"
                 )
-        return GanttPlot(self, locator, tag_palette=tag_palette)
+        return GanttPlot(
+            self,
+            locator=locator,
+            facecolor=facecolor,
+            color_tag=color_tag,
+            palette=palette
+        )
 
 
 class GanttPlot:
     def __init__(
         self, gantt: Gantt,
         locator: mdates.RRuleLocator,
-        tag_palette: dict = None
+        facecolor: str = None,
+        color_tag: str = None,
+        palette: dict = None
     ):
         """Visualization of Gantt chart.
 
         :param locator: Custom Locator to use for Gantt grid (optional)
         :type locator: matplotlib.dates.RRuleLocator
 
-        :param tag_palette: Dictionary of colors to use for each tag
-        :type tag_palette: Dict[str, str]
+        :param facecolor: Color of Gantt bars (applied to all). This argument,
+            if provided, will override 'color_tag' and 'palette'.
+        :type facecolor: str
+
+        :param color_tag: Tag to use for coloring
+        :type color_tag: str
+
+        :param palette: Dictionary of colors to use for each tag value
+        :type palette: Dict[str, str]
         """
         self.gantt = gantt
         self.tasks = self.gantt.tasks
         self.num_tasks = len(self.tasks)
         self.locator = locator
+        self.facecolor = facecolor
+        self.color_tag = color_tag
+        self.palette = palette
 
         self.fig, self.ax = plt.subplots(1, 1)
 
-        if tag_palette is None:
-            tag_palette = dict()
+        if self.facecolor is None:
+            if self.palette is None:
+                self._get_palette()
+
+            if self.palette:
+                self._get_legend()
 
         for i, task in enumerate(self.tasks):
             self.ax.broken_barh(
@@ -113,16 +145,18 @@ class GanttPlot:
                 (i, 1),
                 linewidth=1,
                 edgecolor="black",
-                facecolor=tag_palette.get(task.tag)
+                facecolor=(
+                    facecolor or self.palette.get(task.tags.get(color_tag))
+                )
             )
 
         self.ax.tick_params("x", labelsize="small")
         self.ax.tick_params("y", width=0, which="both")
-        self.ax.grid(which="both")
+        self.ax.grid(axis="both", which="major")
         self.ax.set_axisbelow(True)
         self.ax.xaxis.set_major_locator(self.locator)
 
-        self.ax.set_yticks(range(self.num_tasks))
+        self.ax.set_yticks(range(self.num_tasks + 1))
         self.ax.set_yticklabels([])
 
         task_label_pos = [0.5 + i for i in range(self.num_tasks)]
@@ -130,19 +164,31 @@ class GanttPlot:
         self.ax.yaxis.set_minor_locator(FixedLocator(task_label_pos))
         self.ax.yaxis.set_ticklabels(task_names, minor=True)
 
-        if tag_palette is not None:
-            patches = []
-            for tag, color in tag_palette.items():
-                _patch = Patch(
-                    edgecolor="black",
-                    facecolor=color,
-                    label=tag
+    def _get_palette(self):
+        if self.color_tag is None:  # Both color_tag and palette are None
+            self.color_tag = ""
+            self.palette = dict()
+        else:
+            if self.palette is None:
+                uniq_vals = {task.tags[self.color_tag] for task in self.tasks}
+                self.palette = dict(
+                    zip(uniq_vals, sns.color_palette("muted", len(uniq_vals)))
                 )
-                patches.append(_patch)
-            self.ax.legend(
-                handles=patches,
-                framealpha=0,
-                ncol=len(self.tasks),
-                loc="lower center",
-                bbox_to_anchor=[0.5, 1],
+
+    def _get_legend(self):
+        patches = []
+        for tag, color in self.palette.items():
+            _patch = Patch(
+                edgecolor="black",
+                facecolor=color,
+                label=tag
             )
+            patches.append(_patch)
+        self.ax.legend(
+            handles=patches,
+            framealpha=0,
+            ncol=len(self.tasks),
+            loc="lower center",
+            bbox_to_anchor=[0.5, 1],
+            title=self.color_tag
+        )

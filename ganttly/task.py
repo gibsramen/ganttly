@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, Union
 from datetime import datetime
 
 import numpy as np
@@ -13,7 +13,7 @@ class Task:
         name: str,
         start: Timepoint,
         end: Timepoint,
-        tag: str = None
+        tags: Dict = None
     ):
         """Individual task to be plotted on a Gantt chart.
 
@@ -26,20 +26,23 @@ class Task:
         :param end: End time of this task
         :type end: Timepoint
 
-        :param tag: Tag to apply to task for coloring (optional)
-        :type tag: str
+        :param tags: Tag dict to apply to task for styling (optional)
+        :type tags: dict
         """
         self.name = name
         self.start = pd.Timestamp(start)
         self.end = pd.Timestamp(end)
-        self.tag = tag
+        self.tags = tags
 
         if self.start > self.end:
             raise ValueError("Start must come before end.")
 
     def __str__(self) -> str:
-        tag_str = self.tag if self.tag else ""
-        return f"Task ({self.name}) [{tag_str}]: {self.start} - {self.end}"
+        tag_str = " "
+        if self.tags is not None:
+            tag_list = [f"{k}: {v}" for k, v in self.tags.items()]
+            tag_str = f" [{','.join(tag_list)}] "
+        return f"Task ({self.name}){tag_str}: {self.start} - {self.end}"
 
     def __repr__(self) -> str:
         return self.__str__()
