@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 from matplotlib.patches import Patch
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator
+import pandas as pd
 import seaborn as sns
 
 from .task import Task
@@ -39,6 +40,12 @@ class Gantt:
         if not all([isinstance(x, Task) for x in tasks]):
             raise ValueError("All entries in tasks must be of type Task.")
         self.tasks += tasks
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """Show tabular representation of tasks."""
+        df = pd.DataFrame.from_records([x.to_dict() for x in self.tasks],
+                                       index="name")
+        return df
 
     def plot(
         self,
@@ -88,7 +95,8 @@ class Gantt:
                 locator == mdates.YearLocator(base=interval)
             else:
                 raise ValueError(
-                    "freqency must be one of 'day', 'week', 'month', or 'year'"
+                    "frequency must be one of "
+                    "'day', 'week', 'month', or 'year'"
                 )
         return GanttPlot(
             self,
